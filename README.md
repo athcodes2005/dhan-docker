@@ -17,7 +17,7 @@ grep -F "VEDL" api-scrip-master-detailed.csv
 
 DHAN_CLIENT_ID=client_id      
 DHAN_API_KEY=key       
-DHAN_API_SECRET=secret 
-DHAN_PIN=pin 
-DHAN_MOBILE_NUMBER=phone_number     
+DHAN_API_SECRET=secret      
+DHAN_PIN=pin     
+DHAN_MOBILE_NUMBER=phone_number       
 DHAN_TOTP_SEED=totp_seed     
