@@ -1,0 +1,16 @@
+dhanhq>=2.2.0rc1 --prerelease=allow
+pandas
+tabulate
+python-dotenv
+matplotlib
+requests
+pyotp
+playwright
+nbconvert
+ipykernel
+notebook
+jupyter
+pandas-ta
+plotly
+streamlit
+watchdog
