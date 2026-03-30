@@ -1,0 +1,18 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Playwright browser data
+dhan-chrome/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Database
+dhan_instruments.db
+
+# OS
+.DS_Store
