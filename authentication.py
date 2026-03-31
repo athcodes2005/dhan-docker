@@ -38,9 +38,11 @@ dhan_login = DhanLogin(DHAN_CLIENT_ID)
 user_data_dir = 'dhan-chrome'
 
 def current_access_token():
+    if not os.path.exists("config.json"):
+        return None
     with open("config.json", "r") as f:
         data = json.load(f)
-    return data['accessToken']
+    return data.get('accessToken')
 
 
 def generate_dhan_consent():
@@ -168,8 +170,14 @@ def generate_new_access_token():
             
             if session_data and "accessToken" in session_data:
                 session_data["consent_id"] = consent_id
-                session_data["token_id"] = token_id               
-                print("✅ Access Token and Session Data successfully generated!")                
+                session_data["token_id"] = token_id
+                # Preserve autoRenew preference from existing config
+                if os.path.exists("config.json"):
+                    with open("config.json", "r") as f:
+                        old_config = json.load(f)
+                    if old_config.get("autoRenew"):
+                        session_data["autoRenew"] = True
+                print("✅ Access Token and Session Data successfully generated!")
                 with open("config.json", "w") as f:
                     json.dump(session_data, f, indent=4)
                 print("💾 Structure maintained and saved to config.json")

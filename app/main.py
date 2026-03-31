@@ -1,6 +1,9 @@
 import os
 import json
-from datetime import date
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+from datetime import date, datetime
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
@@ -11,7 +14,9 @@ from starlette.responses import RedirectResponse
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dhanhq import DhanContext, dhanhq
 
-from authentication import current_access_token, DHAN_CLIENT_ID
+from authentication import current_access_token, generate_new_access_token, DHAN_CLIENT_ID
+
+logger = logging.getLogger("dhan-dashboard")
 
 load_dotenv()
 
@@ -109,9 +114,42 @@ class AuthMiddleware(BaseHTTPMiddleware):
         return response
 
 
+# --- Token Auto-Renewal ---
+
+async def token_renewal_loop():
+    while True:
+        await asyncio.sleep(60)
+        try:
+            config = load_config()
+            if not config.get("autoRenew"):
+                continue
+            expiry_str = config.get("expiryTime")
+            if not expiry_str:
+                continue
+            expiry_dt = datetime.fromisoformat(expiry_str)
+            remaining = (expiry_dt - datetime.now()).total_seconds()
+            if 0 < remaining < 300:
+                logger.info("Auto-renewing token (expires in %ds)", int(remaining))
+                await asyncio.to_thread(generate_new_access_token)
+                logger.info("Token auto-renewed successfully")
+            elif remaining <= 0 :
+                logger.info("Token expired, auto-renewing")
+                await asyncio.to_thread(generate_new_access_token)
+                logger.info("Token auto-renewed successfully")
+        except Exception as e:
+            logger.error("Token auto-renewal failed: %s", e)
+
+
+@asynccontextmanager
+async def lifespan(app):
+    task = asyncio.create_task(token_renewal_loop())
+    yield
+    task.cancel()
+
+
 # --- App ---
 
-app = FastAPI(title="Dhan Trading Dashboard")
+app = FastAPI(title="Dhan Trading Dashboard", lifespan=lifespan)
 app.add_middleware(AuthMiddleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 

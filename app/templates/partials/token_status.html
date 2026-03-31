@@ -76,6 +76,15 @@
 
 <h3>Actions</h3>
 {% if user.role == 'admin' %}
+<div class="toggle-row">
+    <label class="toggle-switch">
+        <input type="checkbox" {% if auto_renew %}checked{% endif %}
+               hx-post="/api/toggle-auto-renew" hx-target="#token-status">
+        <span class="toggle-slider"></span>
+    </label>
+    <span>Auto-Renew Token <small>(renews 5 min before expiry)</small></span>
+</div>
+
 <div id="token-result"></div>
 <button hx-post="/api/generate-token" hx-target="#token-status" hx-indicator="#gen-spinner">
     Generate New Access Token

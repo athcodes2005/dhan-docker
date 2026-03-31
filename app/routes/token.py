@@ -1,4 +1,5 @@
 import os
+import json
 import asyncio
 from datetime import datetime
 
@@ -9,6 +10,11 @@ from authentication import (
     get_whitelisted_ip,
     ensure_static_ip,
 )
+
+
+def _save_config(config):
+    with open("config.json", "w") as f:
+        json.dump(config, f, indent=4)
 
 router = APIRouter()
 
@@ -56,6 +62,52 @@ async def token_status(request: Request):
         "token": token_data,
         "ip": ip_data,
         "static_ip": os.getenv("STATIC_IP", ""),
+        "auto_renew": config.get("autoRenew", False),
+    })
+
+
+@router.post("/api/toggle-auto-renew")
+async def toggle_auto_renew(request: Request):
+    if request.state.user["role"] != "admin":
+        return "<p class='error'>Admin access required.</p>"
+
+    config = load_config()
+    config["autoRenew"] = not config.get("autoRenew", False)
+    _save_config(config)
+
+    # Re-render full token status
+    token_data = None
+    ip_data = None
+    if config.get("accessToken"):
+        expiry_str = config.get("expiryTime")
+        if expiry_str:
+            try:
+                expiry_dt = datetime.fromisoformat(expiry_str)
+                now = datetime.now()
+                time_left = expiry_dt - now
+                total_secs = int(time_left.total_seconds())
+                hours, remainder = divmod(max(total_secs, 0), 3600)
+                minutes, _ = divmod(remainder, 60)
+                token_data = {
+                    "active": total_secs > 0,
+                    "expiry": expiry_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                    "remaining": f"{hours}h {minutes}m",
+                }
+            except Exception:
+                pass
+        ip_data = get_whitelisted_ip()
+        if "error" in ip_data:
+            ip_data = None
+
+    state = "enabled" if config["autoRenew"] else "disabled"
+    return templates.TemplateResponse(request, "partials/token_status.html", {
+        "user": request.state.user,
+        "has_token": bool(config.get("accessToken")),
+        "token": token_data,
+        "ip": ip_data,
+        "static_ip": os.getenv("STATIC_IP", ""),
+        "auto_renew": config["autoRenew"],
+        "message": {"type": "success", "text": f"Auto-renewal {state}."},
     })
 
 
@@ -108,6 +160,7 @@ async def generate_token(request: Request):
         "token": token_data,
         "ip": ip_data,
         "static_ip": os.getenv("STATIC_IP", ""),
+        "auto_renew": config.get("autoRenew", False),
         "message": message,
     })
 
