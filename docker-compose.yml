@@ -3,11 +3,34 @@ services:
     build: .
     container_name: dhan-dashboard
     restart: unless-stopped
-    ports:
-      - "8501:8501"
+    expose:
+      - "8000"
     env_file:
       - .env
     volumes:
       - ./config.json:/app/config.json
       - ./dhan-chrome:/app/dhan-chrome
       - ./dhan_instruments.db:/app/dhan_instruments.db
+      - ./portfolio_history.json:/app/portfolio_history.json
+
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    container_name: dhan-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - .env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - dashboard
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Home — Dhan Dashboard{% endblock %}
+
+{% block content %}
+<h2>Dhan Dashboard</h2>
+<p>Welcome to your Dhan trading dashboard. Use the sidebar to navigate.</p>
+<ul>
+    <li><strong>Authentication</strong> — Manage your access tokens</li>
+    <li><strong>Account</strong> — View your holdings and positions</li>
+    <li><strong>Search</strong> — Search for trading instruments</li>
+</ul>
+
+<hr>
+
+<h3>Fund Limits</h3>
+<div id="fund-limits" hx-get="/api/fund-limits" hx-trigger="load" hx-indicator="#fund-spinner">
+    <span id="fund-spinner" class="htmx-indicator">Loading fund limits...</span>
+</div>
+{% endblock %}

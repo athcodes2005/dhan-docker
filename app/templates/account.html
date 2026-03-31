@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Account — Dhan Dashboard{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+{% endblock %}
+
+{% block content %}
+<h2>Account Summary</h2>
+
+<div class="tabs">
+    <button class="tab active" hx-get="/api/holdings" hx-target="#tab-content" hx-indicator="#tab-spinner"
+            onclick="document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));this.classList.add('active')">
+        Holdings
+    </button>
+    <button class="tab" hx-get="/api/positions" hx-target="#tab-content" hx-indicator="#tab-spinner"
+            onclick="document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));this.classList.add('active')">
+        Positions
+    </button>
+</div>
+
+<div id="tab-content" hx-get="/api/holdings" hx-trigger="load" hx-indicator="#tab-spinner">
+    <span id="tab-spinner" class="htmx-indicator">Loading...</span>
+</div>
+{% endblock %}

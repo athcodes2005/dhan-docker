@@ -1,0 +1,86 @@
+{% if message %}
+<p class="{{ message.type }}">{{ message.text }}</p>
+{% endif %}
+
+<h3>Token Status</h3>
+{% if has_token and token %}
+<div class="metrics-grid">
+    <div class="metric-card">
+        <small>Status</small>
+        <strong>
+            {% if token.active %}
+            <span class="badge success">Active</span>
+            {% else %}
+            <span class="badge error">Expired</span>
+            {% endif %}
+        </strong>
+    </div>
+    <div class="metric-card">
+        <small>Expiry Time</small>
+        <strong>{{ token.expiry }}</strong>
+    </div>
+    <div class="metric-card">
+        <small>Time Remaining</small>
+        <strong>{{ token.remaining }}</strong>
+    </div>
+</div>
+{% elif has_token %}
+<p class="warning">Token present but no expiry info found.</p>
+{% else %}
+<p class="error">No Access Token Found</p>
+{% endif %}
+
+<hr>
+
+<h3>IP Whitelisting</h3>
+{% if has_token and ip %}
+<div class="metrics-grid">
+    <div class="metric-card">
+        <small>Primary IP</small>
+        <strong>{{ ip.primaryIP or 'Not Set' }}</strong>
+    </div>
+    <div class="metric-card">
+        <small>Detected IP</small>
+        <strong>{{ ip.detectedIP or 'Unknown' }}</strong>
+    </div>
+    <div class="metric-card">
+        <small>Match Status</small>
+        <strong>
+            {% if ip.ordersAllowed %}
+            <span class="badge success">{{ ip.ipMatchStatus }} — Orders Allowed</span>
+            {% else %}
+            <span class="badge error">{{ ip.ipMatchStatus }} — Orders Blocked</span>
+            {% endif %}
+        </strong>
+    </div>
+    <div class="metric-card">
+        <small>Can Change After</small>
+        <strong>{{ ip.modifyDatePrimary or 'N/A' }}</strong>
+    </div>
+</div>
+
+{% if not ip.ordersAllowed and static_ip and user.role == 'admin' %}
+<div id="ip-result"></div>
+<button class="outline" hx-post="/api/set-ip" hx-target="#ip-result">
+    Set Static IP ({{ static_ip }})
+</button>
+{% endif %}
+
+{% elif has_token %}
+<p class="warning">Could not fetch IP status.</p>
+{% else %}
+<p>Generate an access token first to view IP status.</p>
+{% endif %}
+
+<hr>
+
+<h3>Actions</h3>
+{% if user.role == 'admin' %}
+<div id="token-result"></div>
+<button hx-post="/api/generate-token" hx-target="#token-status" hx-indicator="#gen-spinner">
+    Generate New Access Token
+</button>
+<span id="gen-spinner" class="htmx-indicator">Generating token (this may take a moment)...</span>
+{% else %}
+<p>Admin access required to generate tokens.</p>
+{% endif %}

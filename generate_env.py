@@ -17,6 +17,9 @@ CREDENTIALS = [
     ("ADMIN_PASSWORD", "Dashboard Admin Password", True),
     ("GUEST_PASSWORD", "Dashboard Guest Password", True),
     ("STATIC_IP", "Server Static IP (for order execution)", False),
+    ("DUCKDNS_SUBDOMAIN", "DuckDNS Subdomain (e.g. dhan-python)", False),
+    ("DUCKDNS_TOKEN", "DuckDNS Token", True),
+    ("SECRET_KEY", "Dashboard Session Secret Key (random string)", True),
 ]
 
 

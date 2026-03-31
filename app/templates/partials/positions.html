@@ -1,0 +1,38 @@
+{% if error %}
+<p class="error">{{ error }}</p>
+{% elif positions is not none and positions | length == 0 %}
+<p>No open positions.</p>
+{% elif positions %}
+<div class="table-wrap">
+<table>
+    <thead>
+        <tr>
+            <th>Symbol</th>
+            <th>Exchange</th>
+            <th>Type</th>
+            <th>Qty</th>
+            <th>Avg Price</th>
+            <th>LTP</th>
+            <th>P&amp;L</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in positions %}
+        <tr>
+            <td>{{ p.tradingSymbol or p.securityId }}</td>
+            <td>{{ p.exchangeSegment }}</td>
+            <td>{{ p.positionType }}</td>
+            <td>{{ p.netQty }}</td>
+            <td>₹{{ p.costPrice or p.buyAvg or '-' }}</td>
+            <td>₹{{ p.lastTradedPrice or '-' }}</td>
+            <td class="{% if (p.realizedProfit or 0) + (p.unrealizedProfit or 0) >= 0 %}text-success{% else %}text-error{% endif %}">
+                ₹{{ "{:,.2f}".format((p.realizedProfit or 0) + (p.unrealizedProfit or 0)) }}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p>No positions data available.</p>
+{% endif %}

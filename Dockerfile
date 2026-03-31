@@ -34,16 +34,16 @@ RUN pip install --no-cache-dir uv && \
 RUN python -m playwright install chromium
 
 # Copy application code
-COPY authentication.py dashboard.py generate_env.py \
+COPY authentication.py generate_env.py \
      instruments_search.py data_querying.py account_details.py \
      .python-version ./
-COPY .streamlit/ .streamlit/
+COPY app/ app/
 
 # Xvfb wrapper script
 RUN printf '#!/bin/bash\nXvfb :99 -screen 0 1280x720x24 -nolisten tcp &\nexport DISPLAY=:99\nexec "$@"\n' > /entrypoint.sh && \
     chmod +x /entrypoint.sh
 
-EXPOSE 8501
+EXPOSE 8000
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["streamlit", "run", "dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

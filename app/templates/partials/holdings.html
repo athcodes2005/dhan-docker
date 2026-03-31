@@ -1,0 +1,98 @@
+{% if error %}
+<p class="error">{{ error }}</p>
+{% elif holdings is not none and holdings | length == 0 %}
+<p>No holdings found.</p>
+{% elif holdings %}
+<div class="metrics-grid">
+    <div class="metric-card">
+        <small>Invested Amount</small>
+        <strong>₹{{ "{:,.2f}".format(summary.invested) }}</strong>
+    </div>
+    <div class="metric-card">
+        <small>Net Asset Value</small>
+        <strong>₹{{ "{:,.2f}".format(summary.nav) }}</strong>
+    </div>
+    <div class="metric-card">
+        <small>P&amp;L</small>
+        <strong class="{% if summary.pnl >= 0 %}text-success{% else %}text-error{% endif %}">
+            ₹{{ "{:,.2f}".format(summary.pnl) }} ({{ "{:+.2f}".format(summary.pnl_pct) }}%)
+        </strong>
+    </div>
+</div>
+
+{% if history and history | length >= 1 %}
+<hr>
+<h4>Portfolio Over Time</h4>
+<canvas id="portfolio-chart" style="max-height: 300px;"></canvas>
+<script>
+(function() {
+    const history = {{ history | tojson }};
+    const ctx = document.getElementById('portfolio-chart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: history.map(h => h.date),
+            datasets: [
+                {
+                    label: 'Invested',
+                    data: history.map(h => h.invested),
+                    borderColor: '#546e7a',
+                    backgroundColor: 'rgba(84,110,122,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                },
+                {
+                    label: 'NAV',
+                    data: history.map(h => h.nav),
+                    borderColor: '#43a047',
+                    backgroundColor: 'rgba(67,160,71,0.1)',
+                    fill: true,
+                    tension: 0.3,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: { intersect: false, mode: 'index' },
+            scales: {
+                y: { beginAtZero: false }
+            }
+        }
+    });
+})();
+</script>
+{% endif %}
+
+<hr>
+<h4>Holdings Detail</h4>
+<div class="table-wrap">
+<table>
+    <thead>
+        <tr>
+            <th>Symbol</th>
+            <th>Exchange</th>
+            <th>Qty</th>
+            <th>Avg Cost</th>
+            <th>LTP</th>
+            <th>Invested</th>
+            <th>Current</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for h in holdings %}
+        <tr>
+            <td>{{ h.tradingSymbol or h.securityId }}</td>
+            <td>{{ h.exchange }}</td>
+            <td>{{ h.totalQty }}</td>
+            <td>₹{{ h.avgCostPrice }}</td>
+            <td>₹{{ h.lastTradedPrice }}</td>
+            <td>₹{{ "{:,.2f}".format(h.investedValue) }}</td>
+            <td>₹{{ "{:,.2f}".format(h.currentValue) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p>No holdings data available.</p>
+{% endif %}

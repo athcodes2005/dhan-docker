@@ -1,0 +1,39 @@
+{% if error %}
+<p class="error">{{ error }}</p>
+{% elif results %}
+<p><small>Found {{ results | length }} results for "{{ query }}"</small></p>
+<div class="table-wrap">
+<table>
+    <thead>
+        <tr>
+            <th>Security ID</th>
+            <th>Exchange</th>
+            <th>Symbol</th>
+            <th>Display Name</th>
+            <th>Series</th>
+            <th>Instrument</th>
+            <th>Type</th>
+            <th>Underlying</th>
+            <th>MTF Leverage</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in results %}
+        <tr>
+            <td>{{ r.security_id }}</td>
+            <td>{{ r.exchange_id }}</td>
+            <td>{{ r.symbol_name }}</td>
+            <td>{{ r.display_name }}</td>
+            <td>{{ r.series }}</td>
+            <td>{{ r.instrument }}</td>
+            <td>{{ r.instrument_type }}</td>
+            <td>{{ r.underlying_symbol }}</td>
+            <td>{{ r.mtf_leverage }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% elif query and query | length >= 2 %}
+<p>No results found for "{{ query }}".</p>
+{% endif %}

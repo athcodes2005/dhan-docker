@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Search — Dhan Dashboard{% endblock %}
+
+{% block content %}
+<h2>Instrument Search</h2>
+
+<div class="search-header">
+    <div class="search-input-wrap">
+        <input type="search" name="q" placeholder="Enter symbol name (e.g., TATA, VEDL)..."
+               hx-get="/api/search" hx-target="#results" hx-indicator="#search-spinner"
+               hx-trigger="input changed delay:300ms, search">
+    </div>
+
+    {% if user.role == 'admin' %}
+    <div class="search-actions">
+        <button class="outline" hx-post="/api/update-db" hx-target="#db-result" hx-indicator="#db-spinner">
+            Update Database
+        </button>
+        <span id="db-spinner" class="htmx-indicator">Updating...</span>
+    </div>
+    {% endif %}
+</div>
+
+<div id="db-result"></div>
+<p><small>Last database update: {{ last_update }}</small></p>
+
+<span id="search-spinner" class="htmx-indicator">Searching...</span>
+<div id="results"></div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% if error %}
+<p class="error">{{ error }}</p>
+{% elif metrics %}
+<div class="metrics-grid">
+    {% for key, value in metrics.items() %}
+    <div class="metric-card">
+        <small>{{ key }}</small>
+        <strong>₹{{ value }}</strong>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No fund data available.</p>
+{% endif %}
