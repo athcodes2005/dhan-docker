@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+config.json
 
 # Playwright browser data
 dhan-chrome/
@@ -13,6 +14,9 @@ __pycache__/
 
 # Database
 dhan_instruments.db
+
+# Deployment scripts (contain project-specific GCP config)
+deploy/
 
 # OS
 .DS_Store

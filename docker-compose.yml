@@ -1,0 +1,13 @@
+services:
+  dashboard:
+    build: .
+    container_name: dhan-dashboard
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      - ./config.json:/app/config.json
+      - ./dhan-chrome:/app/dhan-chrome
+      - ./dhan_instruments.db:/app/dhan_instruments.db

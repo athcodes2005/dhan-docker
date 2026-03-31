@@ -1,0 +1,11 @@
+.venv/
+.git/
+__pycache__/
+*.pyc
+deploy/
+data_analysis.ipynb
+.claude/
+.env
+config.json
+dhan-chrome/
+dhan_instruments.db

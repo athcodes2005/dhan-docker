@@ -2,14 +2,19 @@ import streamlit as st
 import pandas as pd
 import json
 import os
+from dotenv import load_dotenv
 from dhanhq import DhanLogin, DhanContext, dhanhq
 from authentication import (
     generate_new_access_token,
     current_access_token,
+    get_whitelisted_ip,
+    ensure_static_ip,
     DHAN_CLIENT_ID
 )
 from instruments_search import smart_search, update_database
 from datetime import datetime
+
+load_dotenv()
 
 # Set page config
 st.set_page_config(
@@ -17,6 +22,46 @@ st.set_page_config(
     page_icon="📈",
     layout="wide"
 )
+
+
+# --- USER AUTHENTICATION ---
+USERS = {
+    "admin": {"password_env": "ADMIN_PASSWORD", "role": "admin"},
+    "guest": {"password_env": "GUEST_PASSWORD", "role": "guest"},
+}
+
+
+def check_login():
+    """Gate the dashboard behind username/password authentication."""
+    # No passwords configured — allow access as admin (local dev)
+    if not os.getenv("ADMIN_PASSWORD") and not os.getenv("GUEST_PASSWORD"):
+        st.session_state["role"] = "admin"
+        return True
+
+    if st.session_state.get("authenticated"):
+        return True
+
+    st.title("🔒 Login")
+    username = st.text_input("Username:")
+    password = st.text_input("Password:", type="password")
+    if st.button("Login", type="primary"):
+        user = USERS.get(username)
+        if user and password == os.getenv(user["password_env"], ""):
+            st.session_state["authenticated"] = True
+            st.session_state["role"] = user["role"]
+            st.session_state["username"] = username
+            st.rerun()
+        else:
+            st.error("Invalid username or password.")
+    return False
+
+
+def is_admin():
+    return st.session_state.get("role") == "admin"
+
+
+if not check_login():
+    st.stop()
 
 # --- HELPER FUNCTIONS ---
 def get_dhan_client():
@@ -41,13 +86,26 @@ def load_config():
 with st.sidebar:
     st.title("Navigation")
     page = st.radio("Go to:", ["Home", "Authentication", "Account", "Search"])
-    
+
+    st.divider()
+    role_label = st.session_state.get("username", "admin")
+    if is_admin():
+        st.info(f"Logged in as **{role_label}** (admin)")
+    else:
+        st.info(f"Logged in as **{role_label}** (view only)")
+
     st.divider()
     st.subheader("Status")
     config = load_config()
     if config.get("accessToken"):
         st.success("Token Present")
-        # Could add expiry check here if expiryTime date string parsing was implemented
+        ip_info = get_whitelisted_ip()
+        if ip_info.get("ordersAllowed"):
+            st.success("IP Matched — Orders Allowed")
+        elif "error" in ip_info:
+            st.warning("IP Check Failed")
+        else:
+            st.error("IP Mismatch — Orders Blocked")
     else:
         st.warning("No Token Found")
 
@@ -146,18 +204,62 @@ elif page == "Authentication":
         st.error("No Access Token Found")
 
     st.divider()
-    
+
+    # --- IP Whitelisting Status ---
+    st.subheader("IP Whitelisting")
+
+    if config.get("accessToken"):
+        ip_info = get_whitelisted_ip()
+        if "error" not in ip_info:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Primary IP", ip_info.get("primaryIP", "Not Set"))
+                st.metric("Detected IP", ip_info.get("detectedIP", "Unknown"))
+            with col2:
+                match_status = ip_info.get("ipMatchStatus", "UNKNOWN")
+                orders_allowed = ip_info.get("ordersAllowed", False)
+                if orders_allowed:
+                    st.metric("Match Status", match_status, delta="Orders Allowed")
+                else:
+                    st.metric("Match Status", match_status, delta="Orders Blocked", delta_color="inverse")
+                st.metric("Can Change After", ip_info.get("modifyDatePrimary", "N/A"))
+
+            if not orders_allowed:
+                static_ip = os.getenv("STATIC_IP", "")
+                if static_ip and is_admin():
+                    if st.button("Set Static IP as Primary"):
+                        with st.spinner(f"Registering {static_ip} as primary IP..."):
+                            result = ensure_static_ip()
+                            if result.get("ordersAllowed"):
+                                st.success(f"IP {static_ip} registered successfully!")
+                                st.rerun()
+                            elif result.get("error"):
+                                st.error(f"Failed: {result['error']}")
+                            else:
+                                st.warning(f"IP set but status: {result}")
+                elif not static_ip:
+                    st.warning("STATIC_IP not configured in .env")
+        else:
+            st.error(f"Failed to fetch IP status: {ip_info.get('error')}")
+    else:
+        st.info("Generate an access token first to view IP status.")
+
+    st.divider()
+
     # --- Actions ---
     st.subheader("Actions")
-    
-    if st.button("Generate New Access Token", type="primary"):
-        with st.spinner("Launching browser for login..."):
-            try:
-                generate_new_access_token()
-                st.success("Token generation process completed. Check logs or Home status.")
-                st.rerun()
-            except Exception as e:
-                st.error(f"Failed to generate token: {e}")
+
+    if is_admin():
+        if st.button("Generate New Access Token", type="primary"):
+            with st.spinner("Launching browser for login..."):
+                try:
+                    generate_new_access_token()
+                    st.success("Token generation process completed. Check logs or Home status.")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to generate token: {e}")
+    else:
+        st.info("Admin access required to generate tokens.")
 
 elif page == "Account":
     st.title("💼 Account Summary")
@@ -212,13 +314,14 @@ elif page == "Search":
     with col2:
         st.write("") # Spacer
         st.write("") # Spacer
-        if st.button("Update Database"):
-            with st.spinner("Updating database (downloading CSV)..."):
-                try:
-                    update_database()     
-                    st.success("Database updated successfully!")
-                except Exception as e:
-                    st.error(f"Update failed: {e}")
+        if is_admin():
+            if st.button("Update Database"):
+                with st.spinner("Updating database (downloading CSV)..."):
+                    try:
+                        update_database()
+                        st.success("Database updated successfully!")
+                    except Exception as e:
+                        st.error(f"Update failed: {e}")
 
     if query:
         with st.spinner("Searching..."):

@@ -1,13 +1,29 @@
 import os
 import re
+import sys
+import subprocess
+import urllib.parse
 import requests
 import pyotp
 import json
-import time 
+import time
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 from dhanhq import DhanLogin
 load_dotenv()
+
+
+def ensure_playwright_chrome():
+    """Check if Playwright's Chromium is installed, and install it if not."""
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            browser.close()
+        print("✅ Playwright Chromium is already installed.")
+    except Exception:
+        print("⚠️  Playwright Chromium not found. Installing...")
+        subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
+        print("✅ Playwright Chromium installed successfully.")
 
 
 DHAN_CLIENT_ID = os.getenv("DHAN_CLIENT_ID")
@@ -39,14 +55,13 @@ def generate_dhan_consent():
 
 
 def automate_dhan_login(consent_app_id):
-    # user_data_dir = "./dhan-chrome-profile" 
+    ensure_playwright_chrome()
 
     with sync_playwright() as p:
         print("🚀 Launching Chrome...")
         browser = p.chromium.launch_persistent_context(
             user_data_dir,
             headless=False,
-            channel="chrome",
             args=["--disable-blink-features=AutomationControlled"]
         )
         page = browser.pages[0] if browser.pages else browser.new_page()
@@ -170,6 +185,48 @@ def check_access_token():
     print(user_info)
 
 
+def get_whitelisted_ip():
+    """Check the current whitelisted IP status on Dhan."""
+    try:
+        token = current_access_token()
+        resp = requests.get(
+            "https://api.dhan.co/v2/ip/getIP",
+            headers={"Accept": "application/json", "Content-Type": "application/json", "access-token": token},
+        )
+        return resp.json()
+    except Exception as e:
+        return {"error": str(e)}
 
 
-generate_new_access_token()
+def ensure_static_ip():
+    """Check if STATIC_IP from .env is set as primary on Dhan. If not, register it."""
+    static_ip = os.getenv("STATIC_IP")
+    if not static_ip:
+        return {"error": "STATIC_IP not set in .env"}
+
+    ip_info = get_whitelisted_ip()
+    if "error" in ip_info:
+        return ip_info
+
+    if ip_info.get("primaryIP") == static_ip:
+        return ip_info
+
+    # IP doesn't match — register it
+    try:
+        token = current_access_token()
+        resp = requests.post(
+            "https://api.dhan.co/v2/ip/setIP",
+            headers={"Accept": "application/json", "Content-Type": "application/json", "access-token": token},
+            json={"dhanClientId": DHAN_CLIENT_ID, "ip": static_ip, "ipFlag": "PRIMARY"},
+        )
+        result = resp.json()
+        if isinstance(result, dict) and result.get("status") == "SUCCESS":
+            return get_whitelisted_ip()
+        return result
+    except Exception as e:
+        return {"error": str(e)}
+
+
+
+if __name__ == "__main__":
+    generate_new_access_token()
