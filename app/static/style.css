@@ -259,23 +259,38 @@ table {
     color: var(--pico-muted-color);
 }
 
-.toggle-btn {
+button.toggle-btn,
+button.toggle-btn:hover,
+button.toggle-btn:focus,
+button.toggle-btn:active {
+    all: unset;
+    display: inline-block;
     position: relative;
-    width: 48px;
-    height: 26px;
+    width: 48px !important;
+    height: 26px !important;
     min-width: 48px;
+    max-width: 48px;
+    min-height: 26px;
+    max-height: 26px;
     flex-shrink: 0;
-    border: none;
-    border-radius: 26px;
-    background: #b0bec5;
+    border: none !important;
+    border-radius: 26px !important;
+    background: #b0bec5 !important;
     cursor: pointer;
-    padding: 0;
-    margin: 0;
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 26px !important;
+    font-size: 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
     transition: background 0.25s;
+    box-sizing: border-box !important;
 }
 
-.toggle-btn.on {
-    background: #43a047;
+button.toggle-btn.on,
+button.toggle-btn.on:hover,
+button.toggle-btn.on:focus {
+    background: #43a047 !important;
 }
 
 .toggle-knob {
@@ -291,7 +306,7 @@ table {
     pointer-events: none;
 }
 
-.toggle-btn.on .toggle-knob {
+button.toggle-btn.on .toggle-knob {
     transform: translateX(22px);
 }
 
