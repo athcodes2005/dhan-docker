@@ -46,12 +46,18 @@ async def search_instruments(request: Request, q: str = ""):
 @router.post("/api/update-db")
 async def update_db(request: Request):
     if request.state.user["role"] != "admin":
-        return "<p class='error'>Admin access required.</p>"
+        return templates.TemplateResponse(request, "partials/message.html", {
+            "css_class": "error", "text": "Admin access required.",
+        })
 
     try:
         await asyncio.to_thread(update_database)
         config = load_config()
         last_update = config.get("last_database_update", "Unknown")
-        return f"<p class='success'>Database updated successfully. Last update: {last_update}</p>"
+        return templates.TemplateResponse(request, "partials/message.html", {
+            "css_class": "success", "text": f"Database updated successfully. Last update: {last_update}",
+        })
     except Exception as e:
-        return f"<p class='error'>Failed: {e}</p>"
+        return templates.TemplateResponse(request, "partials/message.html", {
+            "css_class": "error", "text": f"Update failed: {e}",
+        })

@@ -3,6 +3,12 @@ services:
     build: .
     container_name: dhan-dashboard
     restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /home/appuser
+      - /var/run
+      - /var/log
     expose:
       - "8000"
     env_file:

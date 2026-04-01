@@ -69,7 +69,9 @@ async def token_status(request: Request):
 @router.post("/api/toggle-auto-renew")
 async def toggle_auto_renew(request: Request):
     if request.state.user["role"] != "admin":
-        return "<p class='error'>Admin access required.</p>"
+        return templates.TemplateResponse(request, "partials/message.html", {
+            "css_class": "error", "text": "Admin access required.",
+        })
 
     config = load_config()
     config["autoRenew"] = not config.get("autoRenew", False)
@@ -168,15 +170,25 @@ async def generate_token(request: Request):
 @router.post("/api/set-ip")
 async def set_ip(request: Request):
     if request.state.user["role"] != "admin":
-        return "<p class='error'>Admin access required.</p>"
+        return templates.TemplateResponse(request, "partials/message.html", {
+            "css_class": "error", "text": "Admin access required.",
+        })
 
     try:
         result = await asyncio.to_thread(ensure_static_ip)
         if result.get("ordersAllowed"):
-            return "<p class='success'>Static IP registered successfully. Reload to see updated status.</p>"
+            return templates.TemplateResponse(request, "partials/message.html", {
+                "css_class": "success", "text": "Static IP registered successfully. Reload to see updated status.",
+            })
         elif result.get("error"):
-            return f"<p class='error'>Failed: {result['error']}</p>"
+            return templates.TemplateResponse(request, "partials/message.html", {
+                "css_class": "error", "text": f"Failed: {result['error']}",
+            })
         else:
-            return f"<p class='warning'>IP set but status unclear. Reload to check.</p>"
+            return templates.TemplateResponse(request, "partials/message.html", {
+                "css_class": "warning", "text": "IP set but status unclear. Reload to check.",
+            })
     except Exception as e:
-        return f"<p class='error'>Error: {e}</p>"
+        return templates.TemplateResponse(request, "partials/message.html", {
+            "css_class": "error", "text": f"Error: {e}",
+        })

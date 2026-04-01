@@ -2,5 +2,17 @@
     tls {
         dns duckdns {env.DUCKDNS_TOKEN}
     }
+
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Frame-Options "DENY"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Content-Security-Policy "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://cdn.jsdelivr.net; connect-src 'self'"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        -Server
+    }
+
     reverse_proxy dashboard:8000
 }

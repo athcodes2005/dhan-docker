@@ -20,7 +20,13 @@ logger = logging.getLogger("dhan-dashboard")
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY environment variable is not set. "
+        "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+    )
+
 COOKIE_MAX_AGE = 86400
 USERS = {
     "admin": {"password_env": "ADMIN_PASSWORD", "role": "admin"},
@@ -102,12 +108,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 request.state.user = user
                 return await call_next(request)
             except (BadSignature, SignatureExpired):
-                pass
-
-        # No passwords configured — auto-login as admin (local dev)
-        if not os.getenv("ADMIN_PASSWORD") and not os.getenv("GUEST_PASSWORD"):
-            request.state.user = {"username": "admin", "role": "admin"}
-            return await call_next(request)
+                logger.warning("Invalid or expired session cookie from %s", request.client.host)
 
         response = RedirectResponse("/login", status_code=302)
         response.delete_cookie("session")

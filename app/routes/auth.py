@@ -1,7 +1,10 @@
 import os
+import logging
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse
 from app.main import templates, serializer, USERS
+
+logger = logging.getLogger("dhan-dashboard")
 
 router = APIRouter()
 
@@ -22,10 +25,11 @@ async def login_submit(request: Request, username: str = Form(), password: str =
         response = RedirectResponse("/", status_code=302)
         response.set_cookie(
             "session", signed,
-            httponly=True, samesite="lax", secure=True, max_age=86400,
+            httponly=True, samesite="strict", secure=True, max_age=86400,
         )
         return response
 
+    logger.warning("Failed login attempt for user '%s' from %s", username, request.client.host)
     return templates.TemplateResponse(request, "login.html", {
         "error": "Invalid username or password.",
     })

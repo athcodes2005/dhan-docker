@@ -1,4 +1,5 @@
 import os
+import secrets
 import stat
 import time
 from getpass import getpass
@@ -19,8 +20,12 @@ CREDENTIALS = [
     ("STATIC_IP", "Server Static IP (for order execution)", False),
     ("DUCKDNS_SUBDOMAIN", "DuckDNS Subdomain (e.g. dhan-python)", False),
     ("DUCKDNS_TOKEN", "DuckDNS Token", True),
-    ("SECRET_KEY", "Dashboard Session Secret Key (random string)", True),
 ]
+
+# Auto-generated keys (not prompted)
+AUTO_KEYS = {
+    "SECRET_KEY": lambda: secrets.token_hex(32),
+}
 
 
 def main():
@@ -55,8 +60,15 @@ def main():
             except KeyboardInterrupt:
                 print("\n\n  TOTP verified. Saving credentials...\n")
 
+    # Auto-generate keys
+    for key, generator in AUTO_KEYS.items():
+        values[key] = generator()
+        print(f"  {key}: auto-generated")
+
     with open(ENV_FILE, "w") as f:
         for key, _, _ in CREDENTIALS:
+            f.write(f"{key}={values[key]}\n")
+        for key in AUTO_KEYS:
             f.write(f"{key}={values[key]}\n")
 
     os.chmod(ENV_FILE, stat.S_IRUSR | stat.S_IWUSR)
