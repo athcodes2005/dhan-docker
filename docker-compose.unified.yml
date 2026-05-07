@@ -1,0 +1,22 @@
+services:
+  dhan:
+    image: ghcr.io/athcodes2005/dhan-python:latest
+    container_name: dhan-trading
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - .env
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+      - TZ=${TZ:-Asia/Kolkata}
+    volumes:
+      - config:/config
+      - data:/app/data
+      - notebooks:/app/notebooks
+
+volumes:
+  config:
+  data:
+  notebooks:
