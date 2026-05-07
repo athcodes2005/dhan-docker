@@ -13,7 +13,7 @@ DHAN_API_KEY = os.getenv("DHAN_API_KEY")
 DHAN_API_SECRET = os.getenv("DHAN_API_SECRET")
 DHAN_TOTP_SEED = os.getenv("DHAN_TOTP_SEED")
 
-CONFIG_PATH = os.environ.get("CONFIG_PATH", CONFIG_PATH)
+CONFIG_PATH = os.environ.get("CONFIG_PATH", "config.json")
 
 dhan_login = DhanLogin(DHAN_CLIENT_ID)
 
