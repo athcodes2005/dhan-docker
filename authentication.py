@@ -7,10 +7,13 @@ import requests
 import pyotp
 import json
 import time
+import threading
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 from dhanhq import DhanLogin
 load_dotenv()
+
+_token_generation_lock = threading.Lock()
 
 
 def ensure_playwright_chrome():
@@ -162,31 +165,36 @@ def consume_dhan_consent(token_id):
         return {"error": str(e)}
 
 def generate_new_access_token():
-    consent_id = generate_dhan_consent()
-    if consent_id:
-        token_id = automate_dhan_login(consent_id)
-        if token_id:
-            session_data = consume_dhan_consent(token_id)
-            
-            if session_data and "accessToken" in session_data:
-                session_data["consent_id"] = consent_id
-                session_data["token_id"] = token_id
-                # Preserve autoRenew preference from existing config
-                if os.path.exists("config.json"):
-                    with open("config.json", "r") as f:
-                        old_config = json.load(f)
-                    if old_config.get("autoRenew"):
-                        session_data["autoRenew"] = True
-                print("✅ Access Token and Session Data successfully generated!")
-                with open("config.json", "w") as f:
-                    json.dump(session_data, f, indent=4)
-                print("💾 Structure maintained and saved to config.json")
+    if not _token_generation_lock.acquire(blocking=False):
+        print("⚠️ Token generation already in progress, skipping.")
+        return
+
+    try:
+        consent_id = generate_dhan_consent()
+        if consent_id:
+            token_id = automate_dhan_login(consent_id)
+            if token_id:
+                session_data = consume_dhan_consent(token_id)
+
+                if session_data and "accessToken" in session_data:
+                    session_data["consent_id"] = consent_id
+                    session_data["token_id"] = token_id
+                    if os.path.exists("config.json"):
+                        with open("config.json", "r") as f:
+                            old_config = json.load(f)
+                        if old_config.get("autoRenew"):
+                            session_data["autoRenew"] = True
+                    print("✅ Access Token and Session Data successfully generated!")
+                    with open("config.json", "w") as f:
+                        json.dump(session_data, f, indent=4)
+                else:
+                    print("❌ Failed to consume consent.")
             else:
-                print("❌ Failed to consume consent.")
+                print("❌ Token ID not captured.")
         else:
-            print("❌ Token ID not captured.")
-    else:
-        print("❌ Consent ID generation failed.")
+            print("❌ Consent ID generation failed.")
+    finally:
+        _token_generation_lock.release()
 
 def check_access_token():
     user_info = dhan_login.user_profile(current_access_token())
