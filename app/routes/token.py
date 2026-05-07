@@ -4,11 +4,13 @@ import asyncio
 from datetime import datetime
 
 from fastapi import APIRouter, Request
+from starlette.responses import StreamingResponse
 from app.main import templates, load_config, get_sidebar_context
 from authentication import (
     generate_new_access_token,
     get_whitelisted_ip,
     ensure_static_ip,
+    get_token_progress,
 )
 
 
@@ -125,46 +127,29 @@ async def generate_token(request: Request):
             "message": {"type": "error", "text": "Admin access required."},
         })
 
-    try:
-        await asyncio.to_thread(generate_new_access_token)
-        message = {"type": "success", "text": "Token generated successfully."}
-    except Exception as e:
-        message = {"type": "error", "text": f"Failed: {e}"}
-
-    # Re-render full status after generation
-    config = load_config()
-    token_data = None
-    ip_data = None
-    if config.get("accessToken"):
-        expiry_str = config.get("expiryTime")
-        if expiry_str:
-            try:
-                expiry_dt = datetime.fromisoformat(expiry_str)
-                now = datetime.now()
-                time_left = expiry_dt - now
-                total_secs = int(time_left.total_seconds())
-                hours, remainder = divmod(max(total_secs, 0), 3600)
-                minutes, _ = divmod(remainder, 60)
-                token_data = {
-                    "active": total_secs > 0,
-                    "expiry": expiry_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                    "remaining": f"{hours}h {minutes}m",
-                }
-            except Exception:
-                pass
-        ip_data = get_whitelisted_ip()
-        if "error" in ip_data:
-            ip_data = None
-
+    asyncio.get_event_loop().run_in_executor(None, generate_new_access_token)
     return templates.TemplateResponse(request, "partials/token_status.html", {
         "user": request.state.user,
-        "has_token": bool(config.get("accessToken")),
-        "token": token_data,
-        "ip": ip_data,
+        "has_token": False,
+        "token": None,
+        "ip": None,
         "static_ip": os.getenv("STATIC_IP", ""),
-        "auto_renew": config.get("autoRenew", False),
-        "message": message,
+        "auto_renew": False,
+        "generating": True,
     })
+
+
+@router.get("/api/token-progress")
+async def token_progress():
+    async def event_stream():
+        while True:
+            progress = get_token_progress()
+            data = json.dumps(progress)
+            yield f"data: {data}\n\n"
+            if progress["done"]:
+                break
+            await asyncio.sleep(0.5)
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @router.post("/api/set-ip")

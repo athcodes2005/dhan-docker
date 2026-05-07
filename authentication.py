@@ -14,6 +14,18 @@ from dhanhq import DhanLogin
 load_dotenv()
 
 _token_generation_lock = threading.Lock()
+_progress = {"step": 0, "total": 7, "message": "", "done": False, "error": False}
+
+
+def _set_progress(step, message, done=False, error=False):
+    _progress["step"] = step
+    _progress["message"] = message
+    _progress["done"] = done
+    _progress["error"] = error
+
+
+def get_token_progress():
+    return dict(_progress)
 
 
 def ensure_playwright_chrome():
@@ -74,10 +86,12 @@ def automate_dhan_login(consent_app_id):
         try:
             # Construct Login URL
             login_url = f"https://auth.dhan.co/login/consentApp-login?consentAppId={consent_app_id}"
+            _set_progress(2, "Navigating to login page...")
             print(f"🔗 Navigating to Login Page...")
             page.goto(login_url)
 
             # --- STEP A: Mobile Number ---
+            _set_progress(3, "Entering mobile number...")
             print("📱 Entering Mobile Number...")
             mobile_input = page.get_by_placeholder(re.compile(r"Mobile|Number", re.I))
             mobile_input.fill(DHAN_MOBILE_NUMBER)
@@ -85,6 +99,7 @@ def automate_dhan_login(consent_app_id):
             page.wait_for_timeout(1000)
 
             # --- STEP B: TOTP (2FA) ---
+            _set_progress(4, "Entering TOTP code...")
             print("🔐 Entering TOTP...")
             page.wait_for_selector("input", state="visible")
             totp_code = pyotp.TOTP(DHAN_TOTP_SEED.replace(" ", "")).now()
@@ -94,6 +109,7 @@ def automate_dhan_login(consent_app_id):
             page.wait_for_timeout(1000)
 
             # --- STEP C: 6-Digit PIN + CAPTURE REDIRECT ---
+            _set_progress(5, "Entering PIN and waiting for redirect...")
             print("🔑 Entering PIN and watching for redirect...")
             page.wait_for_selector("input", state="visible")
             page.locator("input").first.click()
@@ -170,29 +186,36 @@ def generate_new_access_token():
         return
 
     try:
+        _set_progress(1, "Generating consent ID...")
         consent_id = generate_dhan_consent()
-        if consent_id:
-            token_id = automate_dhan_login(consent_id)
-            if token_id:
-                session_data = consume_dhan_consent(token_id)
+        if not consent_id:
+            _set_progress(0, "Consent ID generation failed.", done=True, error=True)
+            return
 
-                if session_data and "accessToken" in session_data:
-                    session_data["consent_id"] = consent_id
-                    session_data["token_id"] = token_id
-                    if os.path.exists("config.json"):
-                        with open("config.json", "r") as f:
-                            old_config = json.load(f)
-                        if old_config.get("autoRenew"):
-                            session_data["autoRenew"] = True
-                    print("✅ Access Token and Session Data successfully generated!")
-                    with open("config.json", "w") as f:
-                        json.dump(session_data, f, indent=4)
-                else:
-                    print("❌ Failed to consume consent.")
-            else:
-                print("❌ Token ID not captured.")
+        _set_progress(2, "Launching browser...")
+        token_id = automate_dhan_login(consent_id)
+        if not token_id:
+            _set_progress(0, "Token ID not captured.", done=True, error=True)
+            return
+
+        _set_progress(6, "Exchanging token for access key...")
+        session_data = consume_dhan_consent(token_id)
+
+        if session_data and "accessToken" in session_data:
+            session_data["consent_id"] = consent_id
+            session_data["token_id"] = token_id
+            if os.path.exists("config.json"):
+                with open("config.json", "r") as f:
+                    old_config = json.load(f)
+                if old_config.get("autoRenew"):
+                    session_data["autoRenew"] = True
+            with open("config.json", "w") as f:
+                json.dump(session_data, f, indent=4)
+            _set_progress(7, "Token generated successfully!", done=True)
         else:
-            print("❌ Consent ID generation failed.")
+            _set_progress(0, "Failed to consume consent.", done=True, error=True)
+    except Exception as e:
+        _set_progress(0, f"Error: {e}", done=True, error=True)
     finally:
         _token_generation_lock.release()
 
