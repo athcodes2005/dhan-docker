@@ -28,8 +28,8 @@ WORKDIR /app
 # Install Python dependencies
 COPY pyproject.toml uv.lock ./
 RUN pip install --no-cache-dir uv && \
-    uv pip install --system --no-cache --prerelease=allow \
-    "dhanhq>=2.2.0rc1" "fastapi>=0.115.0" "itsdangerous>=2.2.0" \
+    uv pip install --system --no-cache \
+    "dhanhq>=2.2.0" "fastapi>=0.115.0" "itsdangerous>=2.2.0" \
     "jinja2>=3.1.0" "pandas>=2.3.3" "playwright>=1.58.0" \
     "pyotp>=2.9.0" "python-dotenv>=1.2.1" "python-multipart>=0.0.9" \
     "requests>=2.32.5" "tabulate>=0.9.0" "uvicorn[standard]>=0.30.0"

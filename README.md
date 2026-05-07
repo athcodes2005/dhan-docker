@@ -29,7 +29,7 @@ source .venv/bin/activate
 
 # Install dependencies
 pip install uv
-uv pip install --prerelease=allow -r pyproject.toml
+uv pip install -r pyproject.toml
 
 # Install Playwright browser
 python -m playwright install chromium
