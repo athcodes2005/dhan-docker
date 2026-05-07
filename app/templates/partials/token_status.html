@@ -95,9 +95,7 @@
 <script>
 (function() {
     const steps = [
-        "", "Generating consent ID", "Launching browser",
-        "Entering mobile number", "Entering TOTP code",
-        "Entering PIN & waiting", "Exchanging token", "Done"
+        "", "Generating TOTP", "Authenticating with Dhan", "Done"
     ];
     const es = new EventSource("/api/token-progress");
     const fill = document.getElementById("progress-fill");

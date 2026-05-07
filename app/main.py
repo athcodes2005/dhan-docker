@@ -14,7 +14,7 @@ from starlette.responses import RedirectResponse
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from dhanhq import DhanContext, dhanhq
 
-from authentication import current_access_token, generate_new_access_token, DHAN_CLIENT_ID
+from authentication import current_access_token, generate_new_access_token, renew_access_token, DHAN_CLIENT_ID
 
 logger = logging.getLogger("dhan-dashboard")
 
@@ -131,12 +131,12 @@ async def token_renewal_loop():
             remaining = (expiry_dt - datetime.now()).total_seconds()
             if 0 < remaining < 300:
                 logger.info("Auto-renewing token (expires in %ds)", int(remaining))
-                await asyncio.to_thread(generate_new_access_token)
+                await asyncio.to_thread(renew_access_token)
                 logger.info("Token auto-renewed successfully")
-            elif remaining <= 0 :
-                logger.info("Token expired, auto-renewing")
+            elif remaining <= 0:
+                logger.info("Token expired, generating fresh token")
                 await asyncio.to_thread(generate_new_access_token)
-                logger.info("Token auto-renewed successfully")
+                logger.info("Token generated successfully")
         except Exception as e:
             logger.error("Token auto-renewal failed: %s", e)
 
