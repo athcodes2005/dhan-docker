@@ -18,6 +18,11 @@ def _save_config(config):
     with open("config.json", "w") as f:
         json.dump(config, f, indent=4)
 
+def _unwrap_ip(raw):
+    if isinstance(raw, dict) and isinstance(raw.get("data"), dict):
+        return raw["data"]
+    return raw
+
 router = APIRouter()
 
 
@@ -54,8 +59,8 @@ async def token_status(request: Request):
             except Exception:
                 token_data = {"active": False, "expiry": "Parse error", "remaining": "0h 0m"}
 
-        ip_data = get_whitelisted_ip()
-        if "error" in ip_data:
+        ip_data = _unwrap_ip(get_whitelisted_ip())
+        if isinstance(ip_data, dict) and "error" in ip_data:
             ip_data = None
 
     return templates.TemplateResponse(request, "partials/token_status.html", {
@@ -99,8 +104,8 @@ async def toggle_auto_renew(request: Request):
                 }
             except Exception:
                 pass
-        ip_data = get_whitelisted_ip()
-        if "error" in ip_data:
+        ip_data = _unwrap_ip(get_whitelisted_ip())
+        if isinstance(ip_data, dict) and "error" in ip_data:
             ip_data = None
 
     state = "enabled" if config["autoRenew"] else "disabled"

@@ -88,7 +88,11 @@ def get_sidebar_context():
     ip_status = None
     if token_present:
         from authentication import get_whitelisted_ip
-        ip_status = get_whitelisted_ip()
+        raw = get_whitelisted_ip()
+        if isinstance(raw, dict) and "data" in raw and isinstance(raw["data"], dict):
+            ip_status = raw["data"]
+        else:
+            ip_status = raw
     return {"token_present": token_present, "ip_status": ip_status}
 
 
