@@ -16,8 +16,7 @@ CREDENTIALS = [
     ("DHAN_TOTP_SEED", "TOTP Seed (for 2FA)", True),
     ("ADMIN_PASSWORD", "Dashboard Admin Password", True),
     ("GUEST_PASSWORD", "Dashboard Guest Password", True),
-    ("DOMAIN", "Domain (e.g. your-subdomain.duckdns.org, or localhost)", False),
-    ("DUCKDNS_TOKEN", "DuckDNS Token (leave blank if using localhost)", True),
+    ("DOMAIN", "Domain (e.g. your.domain.com, or localhost)", False),
     ("STATIC_IP", "Server Static IP (for order execution, optional)", False),
 ]
 

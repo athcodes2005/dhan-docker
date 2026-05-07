@@ -1,16 +1,13 @@
-# ---- Stage 1: Build Caddy with DuckDNS plugin ----
-FROM caddy:2-builder AS caddy-builder
-RUN xcaddy build --with github.com/caddy-dns/duckdns
+FROM caddy:2 AS caddy
 
-# ---- Stage 2: Main image ----
 FROM python:3.12-slim-bookworm
 
-# Install system deps: supervisord, gosu, and curl (for healthcheck)
+# Install system deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     supervisor gosu curl && rm -rf /var/lib/apt/lists/*
 
-# Copy Caddy binary from builder
-COPY --from=caddy-builder /usr/bin/caddy /usr/bin/caddy
+# Copy stock Caddy binary (no plugins needed)
+COPY --from=caddy /usr/bin/caddy /usr/bin/caddy
 
 WORKDIR /app
 

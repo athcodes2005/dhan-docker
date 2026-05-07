@@ -24,31 +24,6 @@ if [ "$DOMAIN" = "localhost" ]; then
 }
 CADDYEOF
 
-elif [ -n "$DUCKDNS_TOKEN" ]; then
-    cat > "$CADDYFILE" <<CADDYEOF
-${DOMAIN} {
-    tls {
-        dns duckdns ${DUCKDNS_TOKEN}
-    }
-
-    header {
-        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
-        X-Frame-Options "SAMEORIGIN"
-        X-Content-Type-Options "nosniff"
-        Referrer-Policy "strict-origin-when-cross-origin"
-        Content-Security-Policy "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'unsafe-inline' 'unsafe-eval'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net data:; connect-src 'self' wss://${DOMAIN}; frame-src 'self'"
-        Permissions-Policy "camera=(), microphone=(), geolocation=()"
-        -Server
-    }
-
-    handle /lab/* {
-        reverse_proxy 127.0.0.1:8888
-    }
-
-    reverse_proxy 127.0.0.1:8000
-}
-CADDYEOF
-
 else
     cat > "$CADDYFILE" <<CADDYEOF
 ${DOMAIN} {
@@ -57,6 +32,7 @@ ${DOMAIN} {
         X-Frame-Options "SAMEORIGIN"
         X-Content-Type-Options "nosniff"
         Referrer-Policy "strict-origin-when-cross-origin"
+        Content-Security-Policy "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'unsafe-inline' 'unsafe-eval'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net data:; connect-src 'self' wss://${DOMAIN}; frame-src 'self'"
         Permissions-Policy "camera=(), microphone=(), geolocation=()"
         -Server
     }
