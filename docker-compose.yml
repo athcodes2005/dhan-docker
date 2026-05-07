@@ -19,6 +19,20 @@ services:
       - ./dhan_instruments.db:/app/dhan_instruments.db
       - ./portfolio_history.json:/app/portfolio_history.json
 
+  lab:
+    build:
+      context: .
+      dockerfile: Dockerfile.lab
+    container_name: dhan-lab
+    restart: unless-stopped
+    expose:
+      - "8888"
+    env_file:
+      - .env
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./notebooks:/app/notebooks
+
   caddy:
     build:
       context: .
@@ -36,6 +50,7 @@ services:
       - caddy_config:/config
     depends_on:
       - dashboard
+      - lab
 
 volumes:
   caddy_data:

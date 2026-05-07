@@ -6,12 +6,16 @@
     # Security headers
     header {
         Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
-        X-Frame-Options "DENY"
+        X-Frame-Options "SAMEORIGIN"
         X-Content-Type-Options "nosniff"
         Referrer-Policy "strict-origin-when-cross-origin"
-        Content-Security-Policy "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://cdn.jsdelivr.net; connect-src 'self'"
+        Content-Security-Policy "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'unsafe-inline' 'unsafe-eval'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net data:; connect-src 'self' wss://{$DUCKDNS_SUBDOMAIN}.duckdns.org; frame-src 'self'"
         Permissions-Policy "camera=(), microphone=(), geolocation=()"
         -Server
+    }
+
+    handle /lab/* {
+        reverse_proxy lab:8888
     }
 
     reverse_proxy dashboard:8000

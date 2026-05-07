@@ -154,9 +154,10 @@ app = FastAPI(title="Dhan Trading Dashboard", lifespan=lifespan)
 app.add_middleware(AuthMiddleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-from app.routes import auth, home, token, account, search
+from app.routes import auth, home, token, account, search, lab
 app.include_router(auth.router)
 app.include_router(home.router)
 app.include_router(token.router)
 app.include_router(account.router)
 app.include_router(search.router)
+app.include_router(lab.router)
