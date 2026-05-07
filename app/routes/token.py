@@ -5,7 +5,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Request
 from starlette.responses import StreamingResponse
-from app.main import templates, load_config, get_sidebar_context
+from app.main import templates, load_config, get_sidebar_context, get_dhan_client
 from authentication import (
     generate_new_access_token,
     get_whitelisted_ip,
@@ -25,6 +25,22 @@ def _unwrap_ip(raw):
     if isinstance(raw, dict) and isinstance(raw.get("data"), dict):
         return raw["data"]
     return raw
+
+
+def _check_data_api():
+    try:
+        dhan = get_dhan_client()
+        if not dhan:
+            return None
+        resp = dhan.historical_daily_data("21428", "NSE_EQ", "EQUITY", "2025-01-01", "2025-01-02")
+        if resp.get("status") == "failure":
+            remarks = resp.get("remarks", {})
+            code = remarks.get("error_code", "") if isinstance(remarks, dict) else ""
+            if code == "DH-902":
+                return False
+        return True
+    except Exception:
+        return None
 
 router = APIRouter()
 
@@ -65,12 +81,14 @@ async def token_status(request: Request):
         ip_data = _unwrap_ip(get_whitelisted_ip())
         if isinstance(ip_data, dict) and "error" in ip_data:
             ip_data = None
+        data_api = _check_data_api()
 
     return templates.TemplateResponse(request, "partials/token_status.html", {
         "user": request.state.user,
         "has_token": bool(config.get("accessToken")),
         "token": token_data,
         "ip": ip_data,
+        "data_api": data_api if config.get("accessToken") else None,
         "static_ip": os.getenv("STATIC_IP", ""),
         "auto_renew": config.get("autoRenew", False),
     })
@@ -110,6 +128,7 @@ async def toggle_auto_renew(request: Request):
         ip_data = _unwrap_ip(get_whitelisted_ip())
         if isinstance(ip_data, dict) and "error" in ip_data:
             ip_data = None
+        data_api = _check_data_api()
 
     state = "enabled" if config["autoRenew"] else "disabled"
     return templates.TemplateResponse(request, "partials/token_status.html", {
@@ -117,6 +136,7 @@ async def toggle_auto_renew(request: Request):
         "has_token": bool(config.get("accessToken")),
         "token": token_data,
         "ip": ip_data,
+        "data_api": data_api if config.get("accessToken") else None,
         "static_ip": os.getenv("STATIC_IP", ""),
         "auto_renew": config["autoRenew"],
         "message": {"type": "success", "text": f"Auto-renewal {state}."},

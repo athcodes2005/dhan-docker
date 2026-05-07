@@ -74,6 +74,31 @@
 
 <hr>
 
+<h3>Data API</h3>
+{% if has_token and data_api is not none %}
+<div class="metrics-grid">
+    <div class="metric-card">
+        <small>Historical / Intraday Data</small>
+        <strong>
+            {% if data_api %}
+            <span class="badge success">Subscribed</span>
+            {% else %}
+            <span class="badge error">Not Subscribed</span>
+            {% endif %}
+        </strong>
+    </div>
+</div>
+{% if not data_api %}
+<p class="warning">Subscribe to Dhan's Data API plan to use historical and intraday data in Lab notebooks.</p>
+{% endif %}
+{% elif has_token %}
+<p class="warning">Could not check Data API status.</p>
+{% else %}
+<p>Generate an access token first to check Data API status.</p>
+{% endif %}
+
+<hr>
+
 <h3>Actions</h3>
 {% if user.role == 'admin' %}
 <div class="toggle-row">
