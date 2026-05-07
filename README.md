@@ -1,6 +1,6 @@
 # Dhan Python Trading Dashboard
 
-A Streamlit-based trading dashboard for the [DhanHQ](https://dhanhq.co/) platform. Automates authentication via Playwright, displays portfolio data, and provides instrument search.
+A FastAPI-based trading dashboard for the [DhanHQ](https://dhanhq.co/) platform. Automates authentication via Playwright, displays portfolio data, and provides instrument search.
 
 ## Login Credentials
 
@@ -38,7 +38,7 @@ python -m playwright install chromium
 python generate_env.py
 
 # Run the dashboard
-streamlit run dashboard.py
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 ## Environment Variables
@@ -54,6 +54,7 @@ DHAN_MOBILE_NUMBER=your_registered_mobile
 DHAN_TOTP_SEED=your_totp_seed
 ADMIN_PASSWORD=admin_dashboard_password
 GUEST_PASSWORD=guest_dashboard_password
+SECRET_KEY=your_secret_key
 STATIC_IP=your_server_static_ip
 ```
 
@@ -62,18 +63,16 @@ STATIC_IP=your_server_static_ip
 The app is deployed on Google Cloud (project: `dhan-trading-server`) using Docker.
 
 ```bash
-# Provision GCP infrastructure
-bash deploy/gcloud-setup.sh
+# Copy files to server
+gcloud compute scp <files> trading-server:~/ --project=dhan-trading-server --zone=asia-south1-c
 
-# Install Docker on the server
-bash deploy/server-setup.sh
-
-# Deploy the application
-bash deploy/deploy.sh
+# SSH and rebuild containers
+gcloud compute ssh trading-server --project=dhan-trading-server --zone=asia-south1-c \
+  --command="docker compose up -d --build"
 ```
 
 ## Architecture
 
 - **Container:** Docker with Xvfb for headless Playwright browser automation
-- **Port:** 8501 (Streamlit)
+- **Port:** 8000 (Uvicorn/FastAPI)
 - **Static IP:** Configured via `STATIC_IP` in `.env`, whitelisted on Dhan for order execution
