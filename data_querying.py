@@ -29,20 +29,25 @@ def get_dhan():
 #all values must be string 
 #refer https://dhanhq.co/docs/v2/annexure/
 #series obtained from instrument search 
+def _parse_response(resp):
+    if resp.get("status") == "failure":
+        remarks = resp.get("remarks", {})
+        msg = remarks.get("error_message", "Unknown error") if isinstance(remarks, dict) else str(remarks)
+        raise RuntimeError(f"Dhan API error: {msg}")
+    raw = resp.get("data")
+    if not raw:
+        raise RuntimeError("Dhan API returned empty data")
+    return pd.DataFrame(raw)
+
+
 def get_historical_data(security_id, exchange_segment, instrument_type, from_date, to_date):
-    try:
-        dhan = get_dhan()
-        data = dhan.historical_daily_data(security_id, exchange_segment, instrument_type, from_date, to_date)
-        return pd.DataFrame(data["data"])
-    except Exception as e:
-        print(e)
+    dhan = get_dhan()
+    resp = dhan.historical_daily_data(security_id, exchange_segment, instrument_type, from_date, to_date)
+    return _parse_response(resp)
 
 
 def get_intraminute_data(security_id, exchange_segment, instrument_type, from_date, to_date):
-    try:
-        dhan = get_dhan()
-        data = dhan.intraday_minute_data(security_id, exchange_segment, instrument_type, from_date, to_date)
-        return pd.DataFrame(data["data"])
-    except Exception as e:
-        print(e)
+    dhan = get_dhan()
+    resp = dhan.intraday_minute_data(security_id, exchange_segment, instrument_type, from_date, to_date)
+    return _parse_response(resp)
 
