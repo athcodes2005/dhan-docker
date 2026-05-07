@@ -54,9 +54,12 @@ def get_dhan_client():
     return None
 
 
+CONFIG_PATH = os.environ.get("CONFIG_PATH", "config.json")
+
+
 def load_config():
-    if os.path.exists("config.json"):
-        with open("config.json", "r") as f:
+    if os.path.exists(CONFIG_PATH):
+        with open(CONFIG_PATH, "r") as f:
             return json.load(f)
     return {}
 

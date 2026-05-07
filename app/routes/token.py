@@ -14,8 +14,11 @@ from authentication import (
 )
 
 
+CONFIG_PATH = os.environ.get("CONFIG_PATH", "config.json")
+
+
 def _save_config(config):
-    with open("config.json", "w") as f:
+    with open(CONFIG_PATH, "w") as f:
         json.dump(config, f, indent=4)
 
 def _unwrap_ip(raw):

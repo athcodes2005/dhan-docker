@@ -6,6 +6,7 @@ import json
 from datetime import datetime
 
 # --- CONFIGURATION ---
+CONFIG_PATH = os.environ.get("CONFIG_PATH", CONFIG_PATH)
 DATA_DIR = os.environ.get("DATA_DIR", "data")
 csv_url = "https://images.dhan.co/api-data/api-scrip-master-detailed.csv"
 csv_file_name = os.path.join(DATA_DIR, "api-scrip-master-detailed.csv")
@@ -59,15 +60,15 @@ def update_database():
     
     # Update config.json with the current timestamp
     try:
-        if os.path.exists("config.json"):
-            with open("config.json", "r") as f:
+        if os.path.exists(CONFIG_PATH):
+            with open(CONFIG_PATH, "r") as f:
                 config = json.load(f)
         else:
             config = {}
             
         config["last_database_update"] = datetime.now().isoformat()
         
-        with open("config.json", "w") as f:
+        with open(CONFIG_PATH, "w") as f:
             json.dump(config, f, indent=4)
         print(f"Updated last_database_update in config.json")
     except Exception as e:

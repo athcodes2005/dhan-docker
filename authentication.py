@@ -13,6 +13,8 @@ DHAN_API_KEY = os.getenv("DHAN_API_KEY")
 DHAN_API_SECRET = os.getenv("DHAN_API_SECRET")
 DHAN_TOTP_SEED = os.getenv("DHAN_TOTP_SEED")
 
+CONFIG_PATH = os.environ.get("CONFIG_PATH", CONFIG_PATH)
+
 dhan_login = DhanLogin(DHAN_CLIENT_ID)
 
 _token_generation_lock = threading.Lock()
@@ -31,21 +33,21 @@ def get_token_progress():
 
 
 def current_access_token():
-    if not os.path.exists("config.json"):
+    if not os.path.exists(CONFIG_PATH):
         return None
-    with open("config.json", "r") as f:
+    with open(CONFIG_PATH, "r") as f:
         data = json.load(f)
     return data.get("accessToken")
 
 
 def _save_config(data):
-    with open("config.json", "w") as f:
+    with open(CONFIG_PATH, "w") as f:
         json.dump(data, f, indent=4)
 
 
 def _load_config():
-    if os.path.exists("config.json"):
-        with open("config.json", "r") as f:
+    if os.path.exists(CONFIG_PATH):
+        with open(CONFIG_PATH, "r") as f:
             return json.load(f)
     return {}
 
