@@ -38,7 +38,6 @@ RUN mkdir -p /app/data /app/notebooks /config /etc/caddy \
 
 # Copy config files
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY Caddyfile.template /etc/caddy/Caddyfile.template
 COPY entrypoint-unified.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

@@ -10,26 +10,64 @@ if [ ! -f /config/config.json ]; then
     chown appuser:appuser /config/config.json
 fi
 
-# Generate Caddyfile from template
+# Generate Caddyfile
 DOMAIN="${DOMAIN:-localhost}"
 CADDYFILE="/etc/caddy/Caddyfile"
 
 if [ "$DOMAIN" = "localhost" ]; then
-    # Local mode: HTTP only, no TLS
-    sed -e "s|__DOMAIN__|:80|g" \
-        -e "s|__TLS_BLOCK__||g" \
-        /etc/caddy/Caddyfile.template > "$CADDYFILE"
+    cat > "$CADDYFILE" <<CADDYEOF
+:80 {
+    handle /lab/* {
+        reverse_proxy 127.0.0.1:8888
+    }
+    reverse_proxy 127.0.0.1:8000
+}
+CADDYEOF
+
 elif [ -n "$DUCKDNS_TOKEN" ]; then
-    # DuckDNS TLS mode
-    TLS_BLOCK="tls { dns duckdns $DUCKDNS_TOKEN }"
-    sed -e "s|__DOMAIN__|$DOMAIN|g" \
-        -e "s|__TLS_BLOCK__|$TLS_BLOCK|g" \
-        /etc/caddy/Caddyfile.template > "$CADDYFILE"
+    cat > "$CADDYFILE" <<CADDYEOF
+${DOMAIN} {
+    tls {
+        dns duckdns ${DUCKDNS_TOKEN}
+    }
+
+    header {
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Content-Security-Policy "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'unsafe-inline' 'unsafe-eval'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net data:; connect-src 'self' wss://${DOMAIN}; frame-src 'self'"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        -Server
+    }
+
+    handle /lab/* {
+        reverse_proxy 127.0.0.1:8888
+    }
+
+    reverse_proxy 127.0.0.1:8000
+}
+CADDYEOF
+
 else
-    # Auto TLS (Caddy default — requires ports 80/443 open)
-    sed -e "s|__DOMAIN__|$DOMAIN|g" \
-        -e "s|__TLS_BLOCK__||g" \
-        /etc/caddy/Caddyfile.template > "$CADDYFILE"
+    cat > "$CADDYFILE" <<CADDYEOF
+${DOMAIN} {
+    header {
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        -Server
+    }
+
+    handle /lab/* {
+        reverse_proxy 127.0.0.1:8888
+    }
+
+    reverse_proxy 127.0.0.1:8000
+}
+CADDYEOF
 fi
 
 # Generate SECRET_KEY if not set
