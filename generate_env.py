@@ -13,16 +13,14 @@ CREDENTIALS = [
     ("DHAN_API_KEY", "Dhan API Key", True),
     ("DHAN_API_SECRET", "Dhan API Secret", True),
     ("DHAN_PIN", "Dhan Trading PIN", True),
-    ("DHAN_MOBILE_NUMBER", "Registered Mobile Number", False),
     ("DHAN_TOTP_SEED", "TOTP Seed (for 2FA)", True),
     ("ADMIN_PASSWORD", "Dashboard Admin Password", True),
     ("GUEST_PASSWORD", "Dashboard Guest Password", True),
-    ("STATIC_IP", "Server Static IP (for order execution)", False),
-    ("DUCKDNS_SUBDOMAIN", "DuckDNS Subdomain (e.g. dhan-python)", False),
-    ("DUCKDNS_TOKEN", "DuckDNS Token", True),
+    ("DOMAIN", "Domain (e.g. your-subdomain.duckdns.org, or localhost)", False),
+    ("DUCKDNS_TOKEN", "DuckDNS Token (leave blank if using localhost)", True),
+    ("STATIC_IP", "Server Static IP (for order execution, optional)", False),
 ]
 
-# Auto-generated keys (not prompted)
 AUTO_KEYS = {
     "SECRET_KEY": lambda: secrets.token_hex(32),
 }
@@ -35,7 +33,7 @@ def main():
             print("Aborted.")
             return
 
-    print("Enter your Dhan credentials:\n")
+    print("Enter your credentials:\n")
 
     values = {}
     for key, label, secret in CREDENTIALS:
@@ -58,21 +56,21 @@ def main():
                         print(f"\r  -> TOTP: {code}  (expires in {remaining:2d}s)  ", end="", flush=True)
                     time.sleep(1)
             except KeyboardInterrupt:
-                print("\n\n  TOTP verified. Saving credentials...\n")
+                print("\n\n  TOTP verified. Continuing...\n")
 
-    # Auto-generate keys
     for key, generator in AUTO_KEYS.items():
         values[key] = generator()
         print(f"  {key}: auto-generated")
 
     with open(ENV_FILE, "w") as f:
         for key, _, _ in CREDENTIALS:
-            f.write(f"{key}={values[key]}\n")
+            if values[key]:
+                f.write(f"{key}={values[key]}\n")
         for key in AUTO_KEYS:
             f.write(f"{key}={values[key]}\n")
 
     os.chmod(ENV_FILE, stat.S_IRUSR | stat.S_IWUSR)
-    print(f"{ENV_FILE} created with restricted permissions (600).")
+    print(f"\n{ENV_FILE} created with restricted permissions (600).")
 
 
 if __name__ == "__main__":

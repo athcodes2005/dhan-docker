@@ -4,20 +4,18 @@
 !.env.example
 config.json
 
-# Playwright browser data
-dhan-chrome/
-
 # Python
 __pycache__/
 *.pyc
 .venv/
 
-# Database
+# Data (generated at runtime)
 dhan_instruments.db
 portfolio_history.json
+data/
 
-# Deployment scripts (contain project-specific GCP config)
-deploy/
+# Notebooks (user-created)
+notebooks/
 
 # OS
 .DS_Store

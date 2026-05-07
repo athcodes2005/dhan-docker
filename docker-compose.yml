@@ -1,54 +1,22 @@
 services:
-  dashboard:
+  dhan:
     build: .
-    container_name: dhan-dashboard
-    restart: unless-stopped
-    expose:
-      - "8000"
-    env_file:
-      - .env
-    environment:
-      - CONFIG_PATH=/app/config.json
-    volumes:
-      - ./config.json:/app/config.json
-      - dashboard_data:/app/data
-
-  lab:
-    build:
-      context: .
-      dockerfile: Dockerfile.lab
-    container_name: dhan-lab
-    restart: unless-stopped
-    expose:
-      - "8888"
-    env_file:
-      - .env
-    environment:
-      - CONFIG_PATH=/app/config.json
-    volumes:
-      - ./config.json:/app/config.json:ro
-      - ./notebooks:/app/notebooks
-
-  caddy:
-    build:
-      context: .
-      dockerfile: Dockerfile.caddy
-    container_name: dhan-caddy
+    container_name: dhan-trading
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     env_file:
       - .env
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+      - TZ=${TZ:-Asia/Kolkata}
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - dashboard
-      - lab
+      - config:/config
+      - data:/app/data
+      - notebooks:/app/notebooks
 
 volumes:
-  dashboard_data:
-  caddy_data:
-  caddy_config:
+  config:
+  data:
+  notebooks:
