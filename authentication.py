@@ -71,8 +71,18 @@ def generate_dhan_consent():
         return response.get("consentAppId")
 
 
+def _clean_chrome_locks():
+    for f in ("SingletonLock", "SingletonCookie", "SingletonSocket"):
+        path = os.path.join(user_data_dir, f)
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            pass
+
+
 def automate_dhan_login(consent_app_id):
     ensure_playwright_chrome()
+    _clean_chrome_locks()
 
     with sync_playwright() as p:
         print("🚀 Launching Chrome...")
@@ -119,7 +129,7 @@ def automate_dhan_login(consent_app_id):
             try:
                 with page.expect_request(
                     lambda req: "127.0.0.1" in req.url and "token" in req.url.lower(),
-                    timeout=30000
+                    timeout=60000
                 ) as request_info:
                     
                     # Trigger the action while the listener is active
