@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 
 # --- CONFIGURATION ---
-CONFIG_PATH = os.environ.get("CONFIG_PATH", CONFIG_PATH)
+CONFIG_PATH = os.environ.get("CONFIG_PATH", "config.json")
 DATA_DIR = os.environ.get("DATA_DIR", "data")
 csv_url = "https://images.dhan.co/api-data/api-scrip-master-detailed.csv"
 csv_file_name = os.path.join(DATA_DIR, "api-scrip-master-detailed.csv")
