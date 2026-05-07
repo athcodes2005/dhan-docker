@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir \
     python-dotenv \
     tabulate
 
-COPY data_querying.py authentication.py instruments_search.py ./
+COPY data_querying.py instruments_search.py ./
 
 RUN useradd -r -m -d /home/labuser labuser
 RUN mkdir -p /app/notebooks && chown -R labuser:labuser /app

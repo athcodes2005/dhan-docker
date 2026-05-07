@@ -1,11 +1,27 @@
-from dhanhq import MarketFeed,dhanhq,DhanContext
-from authentication import current_access_token,DHAN_CLIENT_ID
+import os
+import json
+
+from dhanhq import MarketFeed, dhanhq, DhanContext
 import pandas as pd
 import pandas_ta as ta
 import numpy as np
 
-dhan_context = DhanContext(DHAN_CLIENT_ID,current_access_token())
-dhan = dhanhq(dhan_context)
+CONFIG_PATH = os.environ.get("CONFIG_PATH", "config.json")
+DHAN_CLIENT_ID = os.getenv("DHAN_CLIENT_ID")
+
+
+def _read_access_token():
+    if os.path.exists(CONFIG_PATH):
+        with open(CONFIG_PATH, "r") as f:
+            return json.load(f).get("accessToken")
+    return None
+
+
+def get_dhan():
+    token = _read_access_token()
+    if not token:
+        raise RuntimeError("No access token found. Generate one from the dashboard first.")
+    return dhanhq(DhanContext(DHAN_CLIENT_ID, token))
 
 
 #return open high low close volume timestamp
@@ -13,24 +29,20 @@ dhan = dhanhq(dhan_context)
 #all values must be string 
 #refer https://dhanhq.co/docs/v2/annexure/
 #series obtained from instrument search 
-def get_historical_data(security_id,exchange_segment,instrument_type,from_date,to_date):
+def get_historical_data(security_id, exchange_segment, instrument_type, from_date, to_date):
     try:
-        data = dhan.historical_daily_data(security_id,exchange_segment,instrument_type,from_date,to_date)
-        raw_data =  data['data']
-        print(raw_data)
-        df = pd.DataFrame(raw_data)
-        return df
+        dhan = get_dhan()
+        data = dhan.historical_daily_data(security_id, exchange_segment, instrument_type, from_date, to_date)
+        return pd.DataFrame(data["data"])
     except Exception as e:
         print(e)
 
 
-#intraday data can be fetched for 90 days at a time
-def get_intraminute_data(security_id,exchange_segment,instrument_type,from_date,to_date):
+def get_intraminute_data(security_id, exchange_segment, instrument_type, from_date, to_date):
     try:
+        dhan = get_dhan()
         data = dhan.intraday_minute_data(security_id, exchange_segment, instrument_type, from_date, to_date)
-        raw_data = data['data']
-        df = pd.DataFrame(raw_data)
-        return df
+        return pd.DataFrame(data["data"])
     except Exception as e:
         print(e)
 
