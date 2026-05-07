@@ -6,9 +6,10 @@ import json
 from datetime import datetime
 
 # --- CONFIGURATION ---
+DATA_DIR = os.environ.get("DATA_DIR", "data")
 csv_url = "https://images.dhan.co/api-data/api-scrip-master-detailed.csv"
-csv_file_name = "api-scrip-master-detailed.csv"
-db_file_name = "dhan_instruments.db"
+csv_file_name = os.path.join(DATA_DIR, "api-scrip-master-detailed.csv")
+db_file_name = os.path.join(DATA_DIR, "dhan_instruments.db")
 chunk_size = 100000 
 
 def download_csv(url, filename):

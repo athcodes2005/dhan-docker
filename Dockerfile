@@ -1,5 +1,7 @@
 FROM python:3.12-slim-bookworm
 
+RUN apt-get update && apt-get install -y --no-install-recommends gosu && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Install Python dependencies
@@ -20,11 +22,15 @@ COPY authentication.py generate_env.py \
      .python-version ./
 COPY app/ app/
 
-# Fix ownership so appuser can write to app dir
-RUN chown -R appuser:appuser /app /home/appuser
+# Create data directory for volumes and fix ownership
+RUN mkdir -p /app/data && chown -R appuser:appuser /app /home/appuser
 
-USER appuser
+ENV DATA_DIR=/app/data
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 8000
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

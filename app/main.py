@@ -37,7 +37,8 @@ serializer = URLSafeTimedSerializer(SECRET_KEY)
 
 templates = Jinja2Templates(directory="app/templates")
 
-PORTFOLIO_HISTORY_FILE = "portfolio_history.json"
+DATA_DIR = os.environ.get("DATA_DIR", "data")
+PORTFOLIO_HISTORY_FILE = os.path.join(DATA_DIR, "portfolio_history.json")
 
 
 # --- Helpers ---

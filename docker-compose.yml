@@ -9,8 +9,7 @@ services:
       - .env
     volumes:
       - ./config.json:/app/config.json
-      - ./dhan_instruments.db:/app/dhan_instruments.db
-      - ./portfolio_history.json:/app/portfolio_history.json
+      - dashboard_data:/app/data
 
   lab:
     build:
@@ -46,5 +45,6 @@ services:
       - lab
 
 volumes:
+  dashboard_data:
   caddy_data:
   caddy_config:
