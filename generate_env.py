@@ -16,7 +16,6 @@ CREDENTIALS = [
     ("DHAN_TOTP_SEED", "TOTP Seed (for 2FA)", True),
     ("ADMIN_PASSWORD", "Dashboard Admin Password", True),
     ("GUEST_PASSWORD", "Dashboard Guest Password", True),
-    ("DOMAIN", "Domain (e.g. your.domain.com, or localhost)", False),
     ("STATIC_IP", "Server Static IP (for order execution, optional)", False),
 ]
 

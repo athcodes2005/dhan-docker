@@ -1,13 +1,8 @@
-FROM caddy:2 AS caddy
-
 FROM python:3.12-slim-bookworm
 
 # Install system deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     supervisor gosu curl && rm -rf /var/lib/apt/lists/*
-
-# Copy stock Caddy binary (no plugins needed)
-COPY --from=caddy /usr/bin/caddy /usr/bin/caddy
 
 WORKDIR /app
 
@@ -29,7 +24,7 @@ COPY authentication.py generate_env.py \
 COPY app/ app/
 
 # Create directories for volumes
-RUN mkdir -p /app/data /app/notebooks /config /etc/caddy \
+RUN mkdir -p /app/data /app/notebooks /config \
     && chown -R appuser:appuser /app /home/appuser
 
 # Copy config files
@@ -41,7 +36,7 @@ ENV DATA_DIR=/app/data \
     CONFIG_PATH=/config/config.json \
     PYTHONPATH=/app
 
-EXPOSE 80 443
+EXPOSE 8000 8888
 
 VOLUME ["/config", "/app/data", "/app/notebooks"]
 

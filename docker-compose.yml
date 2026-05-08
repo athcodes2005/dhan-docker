@@ -4,12 +4,11 @@ services:
     container_name: dhan-trading
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "8000:8000"
+      - "8888:8888"
     env_file:
       - .env
     environment:
-      - DOMAIN=${DOMAIN:-localhost}
       - TZ=${TZ:-Asia/Kolkata}
     volumes:
       - config:/config
