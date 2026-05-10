@@ -59,11 +59,20 @@
     </div>
 </div>
 
-{% if not ip.ordersAllowed and static_ip and user.role == 'admin' %}
-<div id="ip-result"></div>
-<button class="outline" hx-post="/api/set-ip" hx-target="#ip-result">
-    Set Static IP ({{ static_ip }})
-</button>
+{% if user.role == 'admin' %}
+<div style="margin-top: 0.75rem;">
+    <div id="ip-result"></div>
+    <form hx-post="/api/save-static-ip" hx-target="#ip-result" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+        <input type="text" name="static_ip" value="{{ static_ip }}" placeholder="e.g. 203.0.113.42"
+               style="flex: 1; min-width: 160px; margin: 0;">
+        <button type="submit" class="outline" style="margin: 0;">Save</button>
+        {% if static_ip and not ip.ordersAllowed %}
+        <button type="button" class="outline" hx-post="/api/set-ip" hx-target="#ip-result" style="margin: 0;">
+            Apply to Dhan
+        </button>
+        {% endif %}
+    </form>
+</div>
 {% endif %}
 
 {% elif has_token %}

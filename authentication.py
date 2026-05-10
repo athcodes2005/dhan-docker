@@ -94,10 +94,12 @@ def get_whitelisted_ip():
         return {"error": str(e)}
 
 
-def ensure_static_ip():
-    static_ip = os.getenv("STATIC_IP")
+def ensure_static_ip(static_ip=None):
     if not static_ip:
-        return {"error": "STATIC_IP not set in .env"}
+        config = _load_config()
+        static_ip = config.get("staticIp")
+    if not static_ip:
+        return {"error": "Static IP not configured. Set it from the Authentication page."}
 
     ip_info = get_whitelisted_ip()
     if "error" in ip_info:

@@ -89,7 +89,7 @@ async def token_status(request: Request):
         "token": token_data,
         "ip": ip_data,
         "data_api": data_api if config.get("accessToken") else None,
-        "static_ip": os.getenv("STATIC_IP", ""),
+        "static_ip": config.get("staticIp", ""),
         "auto_renew": config.get("autoRenew", False),
     })
 
@@ -137,7 +137,7 @@ async def toggle_auto_renew(request: Request):
         "token": token_data,
         "ip": ip_data,
         "data_api": data_api if config.get("accessToken") else None,
-        "static_ip": os.getenv("STATIC_IP", ""),
+        "static_ip": config.get("staticIp", ""),
         "auto_renew": config["autoRenew"],
         "message": {"type": "success", "text": f"Auto-renewal {state}."},
     })
@@ -146,22 +146,24 @@ async def toggle_auto_renew(request: Request):
 @router.post("/api/generate-token")
 async def generate_token(request: Request):
     if request.state.user["role"] != "admin":
+        config = load_config()
         return templates.TemplateResponse(request, "partials/token_status.html", {
             "user": request.state.user,
             "has_token": False,
             "token": None,
             "ip": None,
-            "static_ip": "",
+            "static_ip": config.get("staticIp", ""),
             "message": {"type": "error", "text": "Admin access required."},
         })
 
+    config = load_config()
     asyncio.get_event_loop().run_in_executor(None, generate_new_access_token)
     return templates.TemplateResponse(request, "partials/token_status.html", {
         "user": request.state.user,
         "has_token": False,
         "token": None,
         "ip": None,
-        "static_ip": os.getenv("STATIC_IP", ""),
+        "static_ip": config.get("staticIp", ""),
         "auto_renew": False,
         "generating": True,
     })
@@ -180,6 +182,30 @@ async def token_progress():
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
+@router.post("/api/save-static-ip")
+async def save_static_ip(request: Request):
+    if request.state.user["role"] != "admin":
+        return templates.TemplateResponse(request, "partials/message.html", {
+            "css_class": "error", "text": "Admin access required.",
+        })
+
+    form = await request.form()
+    ip_value = form.get("static_ip", "").strip()
+
+    config = load_config()
+    config["staticIp"] = ip_value
+    _save_config(config)
+
+    if ip_value:
+        return templates.TemplateResponse(request, "partials/message.html", {
+            "css_class": "success", "text": f"Static IP saved: {ip_value}",
+        })
+    else:
+        return templates.TemplateResponse(request, "partials/message.html", {
+            "css_class": "success", "text": "Static IP cleared.",
+        })
+
+
 @router.post("/api/set-ip")
 async def set_ip(request: Request):
     if request.state.user["role"] != "admin":
@@ -187,8 +213,15 @@ async def set_ip(request: Request):
             "css_class": "error", "text": "Admin access required.",
         })
 
+    config = load_config()
+    static_ip = config.get("staticIp", "")
+    if not static_ip:
+        return templates.TemplateResponse(request, "partials/message.html", {
+            "css_class": "error", "text": "No static IP configured. Save one first.",
+        })
+
     try:
-        result = await asyncio.to_thread(ensure_static_ip)
+        result = await asyncio.to_thread(ensure_static_ip, static_ip)
         if result.get("ordersAllowed"):
             return templates.TemplateResponse(request, "partials/message.html", {
                 "css_class": "success", "text": "Static IP registered successfully. Reload to see updated status.",
