@@ -102,11 +102,11 @@ def get_sidebar_context():
 # --- Auth Middleware ---
 
 class AuthMiddleware(BaseHTTPMiddleware):
-    OPEN_PATHS = {"/login", "/static"}
+    OPEN_PATHS = {"/login", "/healthz", "/static"}
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
-        if path == "/login" or path.startswith("/static"):
+        if path == "/login" or path == "/healthz" or path.startswith("/static"):
             return await call_next(request)
 
         cookie = request.cookies.get("session")
@@ -161,6 +161,11 @@ async def lifespan(app):
 app = FastAPI(title="Dhan Trading Dashboard", lifespan=lifespan)
 app.add_middleware(AuthMiddleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+
+@app.get("/healthz")
+async def healthz():
+    return {"status": "ok"}
 
 from app.routes import auth, home, token, account, search, lab
 app.include_router(auth.router)

@@ -3,6 +3,21 @@ services:
     build: .
     container_name: dhan-trading
     restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+      - /home/appuser:size=128m,mode=1777
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - FOWNER
+      - DAC_OVERRIDE
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "8000:8000"
       - "8888:8888"
