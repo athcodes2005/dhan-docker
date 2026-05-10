@@ -19,8 +19,10 @@ services:
     security_opt:
       - no-new-privileges:true
     ports:
-      - "8000:8000"
-      - "8888:8888"
+      # Bound to loopback only — reach via host reverse proxy (Caddy/nginx).
+      # JupyterLab on 8888 must go through forward_auth on /lab/*.
+      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8888:8888"
     env_file:
       - .env
     environment:

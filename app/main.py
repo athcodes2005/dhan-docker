@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from datetime import date, datetime
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -102,11 +102,11 @@ def get_sidebar_context():
 # --- Auth Middleware ---
 
 class AuthMiddleware(BaseHTTPMiddleware):
-    OPEN_PATHS = {"/login", "/healthz", "/static"}
+    OPEN_PATHS = {"/login", "/healthz", "/api/auth-check", "/static"}
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
-        if path == "/login" or path == "/healthz" or path.startswith("/static"):
+        if path in ("/login", "/healthz", "/api/auth-check") or path.startswith("/static"):
             return await call_next(request)
 
         cookie = request.cookies.get("session")
@@ -166,6 +166,23 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 @app.get("/healthz")
 async def healthz():
     return {"status": "ok"}
+
+
+@app.get("/api/auth-check")
+async def auth_check(request: Request):
+    """Subrequest endpoint for reverse-proxy forward_auth.
+    Returns 200 only for authenticated admin sessions, 401/403 otherwise.
+    Reuses the same serializer/COOKIE_MAX_AGE as AuthMiddleware."""
+    cookie = request.cookies.get("session")
+    if not cookie:
+        return Response(status_code=401)
+    try:
+        data = serializer.loads(cookie, max_age=COOKIE_MAX_AGE)
+    except (BadSignature, SignatureExpired):
+        return Response(status_code=401)
+    if data.get("role") != "admin":
+        return Response(status_code=403)
+    return Response(status_code=200)
 
 from app.routes import auth, home, token, account, search, lab
 app.include_router(auth.router)

@@ -100,6 +100,41 @@ Create a `.env` file manually or use `python generate_env.py`:
 └──────────────────────────────────┘
 ```
 
-## Reverse Proxy (Optional)
+## Reverse Proxy
 
-To serve behind a reverse proxy with TLS, point your proxy at ports `8000` (dashboard) and `8888` (JupyterLab). This is configured separately from this project.
+`docker-compose.yml` binds both ports to `127.0.0.1` — the container is **not**
+reachable from outside the host. Put a reverse proxy in front to serve traffic.
+
+JupyterLab is a code-execution shell with full access to your Dhan token.
+**Never expose port 8888 publicly.** The dashboard provides
+`GET /api/auth-check` (returns 200 for admin sessions, 401/403 otherwise) for
+use as a reverse-proxy subrequest gate on `/lab/*`.
+
+### Caddy example
+
+```caddyfile
+your-domain.example.com {
+    encode zstd gzip
+    header {
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    @lab path /lab/*
+    handle @lab {
+        forward_auth localhost:8000 {
+            uri /api/auth-check
+            copy_headers Cookie
+        }
+        reverse_proxy localhost:8888
+    }
+
+    handle {
+        reverse_proxy localhost:8000
+    }
+}
+```
+
+The proxy and DNS/TLS setup are configured separately from this project.

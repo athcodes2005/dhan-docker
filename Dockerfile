@@ -53,7 +53,9 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 8000 8888
+# Only the dashboard is exposed publicly. JupyterLab on 8888 is intentionally
+# not EXPOSE'd — it should be reached only via a reverse proxy with forward_auth.
+EXPOSE 8000
 
 VOLUME ["/config", "/app/data", "/app/notebooks"]
 
