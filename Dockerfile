@@ -46,6 +46,11 @@ COPY --from=builder /app/.venv /app/.venv
 COPY authentication.py instruments_search.py data_querying.py ./
 COPY app/ app/
 
+# Disable JupyterLab's "fetch news?" popup at the system level so the
+# prompt never appears — important here because /home/appuser is tmpfs,
+# so per-user settings don't persist across container restarts.
+COPY jupyter-overrides.json /app/.venv/share/jupyter/lab/settings/overrides.json
+
 RUN mkdir -p /app/data /app/notebooks /config \
     && chown -R appuser:appuser /app /home/appuser
 
