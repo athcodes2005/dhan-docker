@@ -6,6 +6,7 @@ __pycache__/
 .env
 .env.*
 config.json
+.docker-hub-token
 data/
 notebooks/
 dhan_instruments.db
