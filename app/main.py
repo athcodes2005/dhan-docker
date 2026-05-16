@@ -102,11 +102,11 @@ def get_sidebar_context():
 # --- Auth Middleware ---
 
 class AuthMiddleware(BaseHTTPMiddleware):
-    OPEN_PATHS = {"/login", "/healthz", "/api/auth-check", "/static"}
+    OPEN_PATHS = {"/login", "/healthz", "/api/auth-check", "/favicon.ico", "/static"}
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
-        if path in ("/login", "/healthz", "/api/auth-check") or path.startswith("/static"):
+        if path in ("/login", "/healthz", "/api/auth-check", "/favicon.ico") or path.startswith("/static"):
             return await call_next(request)
 
         cookie = request.cookies.get("session")
@@ -166,6 +166,11 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 @app.get("/healthz")
 async def healthz():
     return {"status": "ok"}
+
+
+@app.get("/favicon.ico")
+async def favicon():
+    return RedirectResponse("/static/favicon.svg", status_code=301)
 
 
 @app.get("/api/auth-check")
