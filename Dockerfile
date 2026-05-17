@@ -18,10 +18,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # --- Runtime stage ---
 FROM python:3.12-slim-bookworm@sha256:d193c6f51a7dbd10395d6328de3a7edb0516fb0608ca138036576f574c3e07d2
 
-LABEL org.opencontainers.image.source="https://github.com/athcodes2005/dhan-python"
+LABEL org.opencontainers.image.source="https://github.com/athcodes2005/dhan-docker"
 LABEL org.opencontainers.image.description="Dhan trading dashboard with FastAPI + JupyterLab"
 LABEL org.opencontainers.image.licenses="MIT"
-LABEL org.opencontainers.image.title="dhan-python"
+LABEL org.opencontainers.image.title="dhan-docker"
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \

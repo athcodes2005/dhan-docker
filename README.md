@@ -6,8 +6,8 @@ A self-hosted trading dashboard for the [DhanHQ](https://dhanhq.co/) platform. S
 
 ```bash
 # 1. Clone and configure
-git clone https://github.com/athcodes2005/dhan-python.git
-cd dhan-python
+git clone https://github.com/athcodes2005/dhan-docker.git
+cd dhan-docker
 python generate_env.py   # interactive credential setup
 
 # 2. Run
@@ -28,7 +28,7 @@ docker run -d \
   -v config:/config \
   -v data:/app/data \
   -v notebooks:/app/notebooks \
-  athcodes2005/dhan-python:latest
+  athcodes2005/dhan-docker:latest
 ```
 
 ## What's Inside
